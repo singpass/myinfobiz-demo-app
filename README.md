@@ -49,11 +49,9 @@ http://localhost:3001
 ---
 ## Login with MockPass
 
-Use this test ID and password to login to SingPass:
+Select a test ID to login to MockPass:
 
-UEN/Entity ID: ``T15LP0011L``
-CorpPass ID: ``CPAGT1``
-Password: ``Spcp1111``
+![Demo Screenshot](mockpass.png)
 
 ---
 ## Enable PKI Digital Signature

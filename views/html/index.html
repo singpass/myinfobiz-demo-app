@@ -118,7 +118,7 @@
       // t2step7 PASTE CODE HERE
 
       var formValues = {
-        "uinfin": data.uinfin,
+        "uinfin": data.person.uinfin.value,
         "name": data.person.name.value,
         "sex": data.person.sex.desc,
         "race": data.person.race.desc,
@@ -153,7 +153,7 @@
     }
 
     // CALLBACK HANDLER
-    if (this.location.href.indexOf("callback?") > -1) {
+    if (this.location.href.includes("callback?") && this.location.href.includes("code=")) {
       scrollToAppForm = true;
 
       // call the backend server APIs

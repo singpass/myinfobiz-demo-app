@@ -1,6 +1,4 @@
 export MYINFO_APP_REDIRECT_URL=http://localhost:3001/callback
-export MYINFO_APP_REALM=http://localhost:3001
-
 
 
 export DEMO_APP_SIGNATURE_CERT_PRIVATE_KEY=./ssl/demoapp-client-privatekey-2018.pem

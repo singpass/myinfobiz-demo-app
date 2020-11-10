@@ -28,8 +28,6 @@ var _clientId = process.env.MYINFO_APP_CLIENT_ID;
 var _clientSecret = process.env.MYINFO_APP_CLIENT_SECRET;
 // redirect URL for your web application
 var _redirectUrl = process.env.MYINFO_APP_REDIRECT_URL;
-// default realm for your web application
-var _realm = process.env.MYINFO_APP_REALM;
 
 // URLs for MyInfo APIs
 var _authLevel = process.env.AUTH_LEVEL;
@@ -42,22 +40,7 @@ var _entitypersonApiUrl = process.env.MYINFOBIZ_API_ENTITYPERSON;
 // Requested attributes
 
 // default myinfo app attributes
-// var _attributes = "name,sex,race,nationality,dob,email,mobileno,regadd,housingtype,hdbtype,marital,edulevel";
-
-// Full (myinfo+myinfobiz) attributes
-//var _attributes = "sex,edulevel,vehicles.engineno,childrenbirthrecords.marriedname,basic-profile,addresses,financials,capitals,appointments,shareholders,grants";
-// var _attributes = "sex,edulevel,vehicles.engineno,basic-profile,addresses,appointments,financials,capitals,shareholders,grants,previous-names,previous-uens";
-//,previous-names,previous-uens
-
-// var _attributes = "name,hanyupinyinname,aliasname,hanyupinyinaliasname,marriedname,sex,race,secondaryrace,dialect,nationality,dob,birthcountry,residentialstatus,passportnumber,passportexpirydate,regadd,mailadd,billadd,housingtype,hdbtype,ownerprivate,email,homeno,mobileno,marital,marriagecertno,countryofmarriage,marriagedate,divorcedate,edulevel,gradyear,schoolname,occupation,employment,householdincome,basic-profile,previous-names,previous-uens,addresses,financials,capitals,appointments,shareholders,grants"
-
-var _attributes = "basic-profile,addresses,licences,appointments,name,sex,race,nationality,dob,email,mobileno,regadd,housingtype,hdbtype,marital,edulevel"
-
-//var _attributes = "name,hanyupinyinname,aliasname,hanyupinyinaliasname,marriedname,sex,race,secondaryrace,dialect,nationality,dob,birthcountry,residentialstatus,passportnumber,passportexpirydate,regadd,mailadd,billadd,housingtype,hdbtype,ownerprivate,email,homeno,mobileno,marital,marriagecertno,countryofmarriage,marriagedate,divorcedate,childrenbirthrecords,edulevel,gradyear,schoolname,occupation,employment,workpassstatus,workpassexpirydate,householdincome,assessableincome,assessyear,noa,noahistory,cpfcontributions,cpfbalances,vehno,basic-profile,previous-names,previous-uens,addresses,financials,capitals,appointments,shareholders,grants,noa-basic,noahistory-basic";
-
-//var _attributes = "uinfin,name,hanyupinyinname,aliasname,hanyupinyinaliasname,marriedname,sex,race,secondaryrace,dialect,nationality,dob,birthcountry,residentialstatus,passportnumber,passportexpirydate,regadd,mailadd,billadd,housingtype,hdbtype,ownerprivate,email,homeno,mobileno,marital,marriagecertno,countryofmarriage,marriagedate,divorcedate,edulevel,gradyear,schoolname,occupation,employment,passstatus,passexpirydate,passtype,employmentsector,householdincome,noa-basic,noa,noahistory-basic,noahistory,cpfcontributions,cpfbalances,childrenbirthrecords.birthcertno,childrenbirthrecords.name,childrenbirthrecords.hanyupinyinname,childrenbirthrecords.aliasname,childrenbirthrecords.hanyupinyinaliasname,childrenbirthrecords.marriedname,childrenbirthrecords.sex,childrenbirthrecords.race,childrenbirthrecords.secondaryrace,childrenbirthrecords.dialect,childrenbirthrecords.lifestatus,childrenbirthrecords.dob,childrenbirthrecords.tob,sponsoredchildrenrecords.nric,sponsoredchildrenrecords.name,sponsoredchildrenrecords.hanyupinyinname,sponsoredchildrenrecords.aliasname,sponsoredchildrenrecords.hanyupinyinaliasname,sponsoredchildrenrecords.marriedname,sponsoredchildrenrecords.sex,sponsoredchildrenrecords.race,sponsoredchildrenrecords.secondaryrace,sponsoredchildrenrecords.dialect,sponsoredchildrenrecords.dob,sponsoredchildrenrecords.birthcountry,sponsoredchildrenrecords.lifestatus,sponsoredchildrenrecords.residentialstatus,sponsoredchildrenrecords.nationality,sponsoredchildrenrecords.scprgrantdate,vehicles.vehicleno,vehicles.type,vehicles.iulabelno,vehicles.make,vehicles.model,vehicles.chassisno,vehicles.engineno,vehicles.motorno,vehicles.yearofmanufacture,vehicles.firstregistrationdate,vehicles.originalregistrationdate,vehicles.coecategory,vehicles.coeexpirydate,vehicles.roadtaxexpirydate,vehicles.quotapremium,vehicles.openmarketvalue,vehicles.co2emission,vehicles.status,vehicles.primarycolour,vehicles.secondarycolour,vehicles.attachment1,vehicles.attachment2,vehicles.attachment3,vehicles.scheme,vehicles.thcemission,vehicles.coemission,vehicles.noxemission,vehicles.pmemission,vehicles.enginecapacity,vehicles.powerrate,vehicles.effectiveownership,vehicles.propellant,vehicles.maximumunladenweight,vehicles.maximumladenweight,vehicles.minimumparfbenefit,vehicles.nooftransfers,vehicles.vpc,drivinglicence.comstatus,drivinglicence.totaldemeritpoints,drivinglicence.suspension.startdate,drivinglicence.suspension.enddate,drivinglicence.disqualification.startdate,drivinglicence.disqualification.enddate,drivinglicence.revocation.startdate,drivinglicence.revocation.enddate,drivinglicence.pdl.validity,drivinglicence.pdl.expirydate,drivinglicence.pdl.classes,drivinglicence.qdl.validity,drivinglicence.qdl.expirydate,drivinglicence.qdl.classes,drivinglicence.photocardserialno,hdbownership.noofowners,hdbownership.address,hdbownership.hdbtype,hdbownership.leasecommencementdate,hdbownership.termoflease,hdbownership.dateofpurchase,hdbownership.dateofownershiptransfer,hdbownership.loangranted,hdbownership.originalloanrepayment,hdbownership.balanceloanrepayment,hdbownership.outstandingloanbalance,hdbownership.monthlyloaninstalment,basic-profile,previous-names,previous-uens,addresses,financials,capitals,appointments,shareholders,grants";
-
-
+var _attributes = "basic-profile,addresses,appointments,name,sex,race,nationality,dob,email,mobileno,regadd,housingtype,hdbtype,marital,edulevel"
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
@@ -214,7 +197,6 @@ function callEntityPersonAPI(accessToken, res) {
         } else {
           if (_authLevel == "L0") {
             entitypersonData = JSON.parse(entitypersonData);
-            entitypersonData.uinfin = uinfin; // add the uinfin into the data to display on screen
 
             console.log("Entity-Person Data :".green);
             console.log(JSON.stringify(entitypersonData));
@@ -250,8 +232,6 @@ function callEntityPersonAPI(accessToken, res) {
                     msg: "INVALID DATA OR SIGNATURE FOR ENTITY-PERSON DATA"
                   })
                 }
-
-                decodedEntityPersonData.uinfin = uinfin; // add the uinfin into the data to display on screen
 
                 console.log("Entity-Person Data (Decoded):".green);
                 console.log(JSON.stringify(decodedEntityPersonData));
@@ -310,8 +290,7 @@ function createTokenRequest(code) {
     _authLevel,
     _clientId,
     _privateKeyContent,
-    _clientSecret,
-    _realm
+    _clientSecret
   );
 
   if (!_.isEmpty(authHeaders)) {
@@ -369,8 +348,7 @@ function createEntityPersonRequest(uen, uinfin, validToken) {
     _authLevel,
     _clientId,
     _privateKeyContent,
-    _clientSecret,
-    _realm
+    _clientSecret
   );
   // t3step2b END PASTE CODE
   if (!_.isEmpty(authHeaders)) {

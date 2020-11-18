@@ -40,7 +40,7 @@ var _entitypersonApiUrl = process.env.MYINFOBIZ_API_ENTITYPERSON;
 // Requested attributes
 
 // default myinfo app attributes
-var _attributes = "basic-profile,addresses,appointments,name,sex,race,nationality,dob,email,mobileno,regadd,housingtype,hdbtype,marital,edulevel"
+var _attributes = "basic-profile,addresses,appointments,uinfin,name,sex,race,nationality,dob,email,mobileno,regadd,housingtype,hdbtype,marital,edulevel"
 
 /* GET home page. */
 router.get('/', function(req, res, next) {

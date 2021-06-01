@@ -123,7 +123,7 @@ router.post('/getentitypersonData', function(req, res, next) {
 });
 
 function callEntityPersonAPI(accessToken, res) {
-  // validate and decode token to get UINFIN
+  // validate and decode token to get uuid
   // t2step4 PASTE CODE BELOW
   var decoded = securityHelper.verifyJWS(accessToken, _publicCertContent);
 
@@ -139,17 +139,12 @@ function callEntityPersonAPI(accessToken, res) {
 
   var sub = decoded.sub.split("_");
   var uen = sub[0];
-  var uinfin = sub[1];
+  var uuid = sub[1];
 
-
-  //uinfin = "S9991214F";
-  //uen = "180084010K";
-
-
-  if (uinfin == undefined || uinfin == null) {
+  if (uuid == undefined || uuid == null) {
     res.jsonp({
       status: "ERROR",
-      msg: "UINFIN NOT FOUND"
+      msg: "UUID NOT FOUND"
     });
   }
 
@@ -160,14 +155,14 @@ function callEntityPersonAPI(accessToken, res) {
     });
   }
 
-  console.log("uinfin:".blue + uinfin);
+  console.log("uuid:".blue + uuid);
   console.log("uen:".blue + uen);
   // t2step4 END PASTE CODE
 
   // **** CALL ENTITY-PERSON API ****
   // Call Entity-Person API using accessToken
   // t2step5 PASTE CODE BELOW
-  var request = createEntityPersonRequest(uen, uinfin, accessToken);
+  var request = createEntityPersonRequest(uen, uuid, accessToken);
 
   // Invoke asynchronous call
   request
@@ -319,11 +314,11 @@ function createTokenRequest(code) {
 }
 
 // function to prepare request for ENTITY-PERSON API
-function createEntityPersonRequest(uen, uinfin, validToken) {
+function createEntityPersonRequest(uen, uuid, validToken) {
   console.log("*************************************".green);
   console.log("**** Create Entity-Person Request ***".green);
   console.log("*************************************".green);
-  var url = _entitypersonApiUrl + "/" + uen + "/" + uinfin + "/";
+  var url = _entitypersonApiUrl + "/" + uen + "/" + uuid + "/";
   var cacheCtl = "no-cache";
   var method = "GET";
   var request = null;

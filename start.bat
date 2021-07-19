@@ -1,6 +1,6 @@
 @ECHO off
-set DEMO_APP_SIGNATURE_CERT_PRIVATE_KEY=./ssl/demoapp-client-privatekey-2018.pem
-set MYINFO_CONSENTPLATFORM_SIGNATURE_CERT_PUBLIC_CERT=./ssl/staging_myinfo_public_cert.cer
+set DEMO_APP_SIGNATURE_CERT_PRIVATE_KEY=./ssl/your-sample-app-private-key.pem
+set MYINFO_CONSENTPLATFORM_SIGNATURE_CERT_PUBLIC_CERT=./ssl/staging-myinfo-public-cert.pem
 
 set MYINFO_APP_CLIENT_ID=STG2-MYINFOBIZ-SELF-TEST
 set MYINFO_APP_CLIENT_SECRET=44d953c796cccebcec9bdc826852857ab412fbe2

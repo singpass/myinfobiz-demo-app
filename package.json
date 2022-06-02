@@ -12,6 +12,7 @@
     "cookie-parser": "~1.4.3",
     "debug": "^4.1.0",
     "express": "^4.13.4",
+    "https": "^1.0.0",
     "jsonwebtoken": "^8.3.0",
     "lodash": "^4.17.20",
     "morgan": "^1.9.1",
@@ -20,9 +21,6 @@
     "pug": "^3.0.0",
     "querystring": "^0.2.0",
     "serve-favicon": "^2.5.0",
-    "superagent": "^3.1.0",
-    "superagent-bluebird-promise": "^4.1.0",
     "urlsafe-base64": "^1.0.0"
-  },
-  "devDependencies": {}
+  }
 }

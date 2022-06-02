@@ -1,14 +1,14 @@
 var express = require('express');
 var router = express.Router();
 
-const restClient = require('superagent-bluebird-promise');
 const path = require('path');
 const url = require('url');
 const util = require('util');
 const Promise = require('bluebird');
 const _ = require('lodash');
 const querystring = require('querystring');
-const securityHelper = require('../lib/security/security');
+const securityHelper = require('../lib/securityHelper');
+const requestHandler = require('../lib/requestHandler');
 const crypto = require('crypto');
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = "0";
@@ -43,17 +43,17 @@ var _entitypersonApiUrl = process.env.MYINFOBIZ_API_ENTITYPERSON;
 var _attributes = "basic-profile,addresses,appointments,uinfin,name,sex,race,nationality,dob,email,mobileno,regadd,housingtype,hdbtype,marital,edulevel"
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
+router.get('/', function (req, res, next) {
   res.sendFile(path.join(__dirname + '/../views/html/index.html'));
 });
 
 // callback function - directs back to home page
-router.get('/callback', function(req, res, next) {
+router.get('/callback', function (req, res, next) {
   res.sendFile(path.join(__dirname + '/../views/html/index.html'));
 });
 
 // function for getting environment variables to the frontend
-router.get('/getEnv', function(req, res, next) {
+router.get('/getEnv', function (req, res, next) {
   if (_clientId == undefined || _clientId == null)
     res.jsonp({
       status: "ERROR",
@@ -71,53 +71,39 @@ router.get('/getEnv', function(req, res, next) {
 });
 
 // function for frontend to call backend
-router.post('/getentitypersonData', function(req, res, next) {
+router.post('/getentitypersonData', function (req, res, next) {
   // get variables from frontend
   var code = req.body.code;
-
-  var data;
-  var request;
 
   // **** CALL TOKEN API ****
   // Call the Token API (with the authorisation code)
   // t2step2 PASTE CODE BELOW
-  request = createTokenRequest(code);
-  request
-    .buffer(true)
-    .end(function(callErr, callRes) {
-      if (callErr) {
-        // ERROR
-        console.log("Error from Token API:".red);
-        console.log(callErr.status);
-        console.log(callErr);
-        // console.log(callErr.response.req.res.text);
-        res.jsonp({
-          status: "ERROR",
-          msg: callErr
-        });
-      } else {
-        // SUCCESSFUL
-        var data = {
-          body: callRes.body,
-          text: callRes.text
-        };
-        console.log("Response from Token API:".green);
-        console.log(JSON.stringify(data.body));
+  callTokenApi(code).then((response) => {
+    var data = JSON.parse(response.msg);
+    console.log("Response from Token API:".green);
+    console.log(JSON.stringify(data));
 
-        var accessToken = data.body.access_token;
+    var accessToken = data.access_token;
 
+    if (accessToken == undefined || accessToken == null) {
+      res.jsonp({
+        status: "ERROR",
+        msg: "ACCESS TOKEN NOT FOUND"
+      });
+    }
 
-        if (accessToken == undefined || accessToken == null) {
-          res.jsonp({
-            status: "ERROR",
-            msg: "ACCESS TOKEN NOT FOUND"
-          });
-        }
-
-        // everything ok, call entity-person API
-        callEntityPersonAPI(accessToken, res);
-      }
+    // everything ok, call entity-person API
+    callEntityPersonAPI(accessToken, res);
+  }).catch(err => {
+    console.log("Error from Token API:".red);
+    console.log(err.statusCode);
+    console.log(err.msg.error);
+    // console.log(callErr.response.req.res.text);
+    res.json({
+      status: "ERROR",
+      msg: err.msg.error
     });
+  });
   // t2step2 END PASTE CODE
 
 });
@@ -162,103 +148,86 @@ function callEntityPersonAPI(accessToken, res) {
   // **** CALL ENTITY-PERSON API ****
   // Call Entity-Person API using accessToken
   // t2step5 PASTE CODE BELOW
-  var request = createEntityPersonRequest(uen, uuid, accessToken);
-
-  // Invoke asynchronous call
-  request
-    .buffer(true)
-    .end(function(callErr, callRes) {
-      if (callErr) {
-        console.log("Error from Entity-Person API:".red);
-        console.log(callErr.status);
-        console.log(callErr.response.req.res.text);
+  getEntityPersonData(uen, uuid, accessToken).then((response) => {
+    var entitypersonData = response.msg;
+    if (entitypersonData == undefined || entitypersonData == null) {
+      res.jsonp({
+        status: "ERROR",
+        msg: "ENTITY-PERSON DATA NOT FOUND"
+      });
+    } else {
+      if (_authLevel == "L0") {
+        console.log("Entity-Person Data :".green);
+        console.log(entitypersonData);
+        // successful. return data back to frontend
         res.jsonp({
-          status: "ERROR",
-          msg: callErr
+          status: "OK",
+          text: JSON.parse(entitypersonData)
         });
-      } else {
-        // SUCCESSFUL
-        var data = {
-          body: callRes.body,
-          text: callRes.text
-        };
 
-        var entitypersonData = data.text;
-        if (entitypersonData == undefined || entitypersonData == null) {
-          res.jsonp({
-            status: "ERROR",
-            msg: "ENTITY-PERSON DATA NOT FOUND"
-          });
-        } else {
-          if (_authLevel == "L0") {
-            entitypersonData = JSON.parse(entitypersonData);
+      } else if (_authLevel == "L2") {
+        console.log("Entity-Person Data (JWE):".green);
+        console.log(entitypersonData);
+        //t3step3 PASTE CODE BELOW
+        // header.encryptedKey.iv.ciphertext.tag
+        var jweParts = entitypersonData.split(".");
 
-            console.log("Entity-Person Data :".green);
-            console.log(JSON.stringify(entitypersonData));
+        securityHelper.decryptJWE(jweParts[0], jweParts[1], jweParts[2], jweParts[3], jweParts[4], _privateKeyContent)
+          .then(entitypersonDataJWS => {
+            if (entitypersonDataJWS == undefined || entitypersonDataJWS == null)
+              res.jsonp({
+                status: "ERROR",
+                msg: "INVALID DATA OR SIGNATURE FOR ENTITY-PERSON DATA"
+              });
+
+            console.log("Entity Person Data (JWS):".green);
+            console.log(JSON.stringify(entitypersonDataJWS));
+
+            var decodedEntityPersonData = securityHelper.verifyJWS(entitypersonDataJWS, _publicCertContent);
+            if (decodedEntityPersonData == undefined || decodedEntityPersonData == null) {
+              res.jsonp({
+                status: "ERROR",
+                msg: "INVALID DATA OR SIGNATURE FOR ENTITY-PERSON DATA"
+              })
+            }
+
+            console.log("Entity-Person Data (Decoded):".green);
+            console.log(JSON.stringify(decodedEntityPersonData));
             // successful. return data back to frontend
             res.jsonp({
               status: "OK",
-              text: entitypersonData
+              text: decodedEntityPersonData
             });
-
-          } else if (_authLevel == "L2") {
-            console.log("Entity-Person Data (JWE):".green);
-            console.log(entitypersonData);
-            //t3step3 PASTE CODE BELOW
-            // header.encryptedKey.iv.ciphertext.tag
-            var jweParts = entitypersonData.split(".");
-
-            securityHelper.decryptJWE(jweParts[0], jweParts[1], jweParts[2], jweParts[3], jweParts[4], _privateKeyContent)
-              .then(entitypersonDataJWS => {
-                if (entitypersonDataJWS == undefined || entitypersonDataJWS == null)
-                  res.jsonp({
-                    status: "ERROR",
-                    msg: "INVALID DATA OR SIGNATURE FOR ENTITY-PERSON DATA"
-                  });
-
-                console.log("Entity Person Data (JWS):".green);
-                console.log(JSON.stringify(entitypersonDataJWS));
-
-                var decodedEntityPersonData = securityHelper.verifyJWS(entitypersonDataJWS, _publicCertContent);
-
-                if (decodedEntityPersonData == undefined || decodedEntityPersonData == null) {
-                  res.jsonp({
-                    status: "ERROR",
-                    msg: "INVALID DATA OR SIGNATURE FOR ENTITY-PERSON DATA"
-                  })
-                }
-
-                console.log("Entity-Person Data (Decoded):".green);
-                console.log(JSON.stringify(decodedEntityPersonData));
-                // successful. return data back to frontend
-                res.jsonp({
-                  status: "OK",
-                  text: decodedEntityPersonData
-                });
-              })
-              .catch(error => {
-                console.error("Error with decrypting JWE: %s".red, error);
-              })
-            //t3step3 END PASTE CODE
-          } else {
-            throw new Error("Unknown Auth Level");
-          }
-        } // end else
+          })
+          .catch(error => {
+            console.error("Error with decrypting JWE: %s".red, error);
+          })
+        //t3step3 END PASTE CODE
+      } else {
+        throw new Error("Unknown Auth Level");
       }
-    }); // end asynchronous call
+    } // end else
+  }).catch(err => {
+    console.log("Error from Entity-Person API:".red);
+    console.log(err.statusCode);
+    console.log(err.msg.error);
+    res.json({
+      status: "ERROR",
+      msg: err.msg.error
+    });
+  })
   // t2step5 END PASTE CODE
 
 }
 
-// function to prepare request for TOKEN API
-function createTokenRequest(code) {
-  console.log("******************************".green);
-  console.log("**** Create Token Request ****".green);
-  console.log("******************************".green);
+// function to prepare request and call TOKEN API
+function callTokenApi(code) {
+  console.log("************************".green);
+  console.log("**** Call Token Api ****".green);
+  console.log("************************".green);
   var cacheCtl = "no-cache";
   var contentType = "application/x-www-form-urlencoded";
   var method = "POST";
-  var request = null;
 
   // preparing the request with header and parameters
   // t2step3 PASTE CODE BELOW
@@ -269,7 +238,6 @@ function createTokenRequest(code) {
     "&client_id=" + _clientId +
     "&client_secret=" + _clientSecret;
   var params = querystring.parse(strParams);
-
 
   // assemble headers for Token API
   var strHeaders = "Content-Type=" + contentType + "&Cache-Control=" + cacheCtl;
@@ -298,30 +266,23 @@ function createTokenRequest(code) {
   console.log("Request Body for Token API:".green);
   console.log(JSON.stringify(params));
 
-  var request = restClient.post(_tokenApiUrl);
+  var parsedTokenUrl = new URL(_tokenApiUrl);
 
-  // Set headers
-  if (!_.isUndefined(headers) && !_.isEmpty(headers))
-    request.set(headers);
-
-  // Set Params
-  if (!_.isUndefined(params) && !_.isEmpty(params))
-    request.send(params);
+  var tokenApiResponse = requestHandler.getHttpsResponse(parsedTokenUrl.hostname, parsedTokenUrl.pathname, headers, method, params);
   // t2step3 END PASTE CODE
 
   console.log("Sending Token Request >>>".green);
-  return request;
+  return tokenApiResponse;
 }
 
-// function to prepare request for ENTITY-PERSON API
-function createEntityPersonRequest(uen, uuid, validToken) {
-  console.log("*************************************".green);
-  console.log("**** Create Entity-Person Request ***".green);
-  console.log("*************************************".green);
+// function to prepare request and call ENTITY-PERSON API
+function getEntityPersonData(uen, uuid, validToken) {
+  console.log("********************************".green);
+  console.log("**** Call Entity-Person Api ****".green);
+  console.log("********************************".green);
   var url = _entitypersonApiUrl + "/" + uen + "/" + uuid + "/";
   var cacheCtl = "no-cache";
   var method = "GET";
-  var request = null;
   // assemble params for Entity-Person API
   // t2step6 PASTE CODE BELOW
   var strParams = "client_id=" + _clientId +
@@ -345,6 +306,7 @@ function createEntityPersonRequest(uen, uuid, validToken) {
     _privateKeyContent,
     _clientSecret
   );
+
   // t3step2b END PASTE CODE
   if (!_.isEmpty(authHeaders)) {
     _.set(headers, "Authorization", authHeaders + ",Bearer " + validToken);
@@ -358,20 +320,13 @@ function createEntityPersonRequest(uen, uuid, validToken) {
   console.log("Request Header for Entity-Person API:".green);
   console.log(JSON.stringify(headers));
 
+  var parsedPersonUrl = new URL(url);
 
-  // invoke token API
-  var request = restClient.get(url);
-
-  // Set headers
-  if (!_.isUndefined(headers) && !_.isEmpty(headers))
-    request.set(headers);
-
-  // Set Params
-  if (!_.isUndefined(params) && !_.isEmpty(params))
-    request.query(params);
+  var entityPersonApiResponse = requestHandler.getHttpsResponse(parsedPersonUrl.hostname, parsedPersonUrl.pathname + "?" + strParams, headers, method, null);
   // t2step6 END PASTE CODE
   console.log("Sending Entity-Person Request >>>".green);
-  return request;
+  // console.log("Response: ", entityPersonApiResponse)
+  return entityPersonApiResponse;
 }
 
 module.exports = router;

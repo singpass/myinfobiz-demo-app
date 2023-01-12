@@ -108,10 +108,10 @@ router.post('/getentitypersonData', function (req, res, next) {
 
 });
 
-function callEntityPersonAPI(accessToken, res) {
+async function callEntityPersonAPI(accessToken, res) {
   // validate and decode token to get uuid
   // t2step4 PASTE CODE BELOW
-  var decoded = securityHelper.verifyJWS(accessToken, _publicCertContent);
+  var decoded = await securityHelper.verifyJWS(accessToken, _publicCertContent);
 
   if (decoded == undefined || decoded == null) {
     res.jsonp({
@@ -173,7 +173,7 @@ function callEntityPersonAPI(accessToken, res) {
         var jweParts = entitypersonData.split(".");
 
         securityHelper.decryptJWE(jweParts[0], jweParts[1], jweParts[2], jweParts[3], jweParts[4], _privateKeyContent)
-          .then(entitypersonDataJWS => {
+          .then(async entitypersonDataJWS => {
             if (entitypersonDataJWS == undefined || entitypersonDataJWS == null)
               res.jsonp({
                 status: "ERROR",
@@ -183,7 +183,7 @@ function callEntityPersonAPI(accessToken, res) {
             console.log("Entity Person Data (JWS):".green);
             console.log(JSON.stringify(entitypersonDataJWS));
 
-            var decodedEntityPersonData = securityHelper.verifyJWS(entitypersonDataJWS, _publicCertContent);
+            var decodedEntityPersonData = await securityHelper.verifyJWS(entitypersonDataJWS, _publicCertContent);
             if (decodedEntityPersonData == undefined || decodedEntityPersonData == null) {
               res.jsonp({
                 status: "ERROR",
